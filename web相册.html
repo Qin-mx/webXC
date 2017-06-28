@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>wep相册</title>
+	<meta name="viewport"
+        content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+	<link rel="stylesheet" href="index.css">
+	<link href="animate.css" rel="stylesheet">
+</head>
+<style>
+	body{
+		background: #000;
+	}
+	li{
+		float: left;
+		width: 100px;
+		height: 100px;
+		overflow: hidden;
+	}
+	.large{
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		top:0;
+		left:0;
+		background: #000;
+		display: none;
+	}
+</style>
+<body>
+	<ul class="img-container" id="container">
+<!-- 		<li><img src="images/1.jpg" alt=""></li>
+		<li><img src="images/1.jpg" alt=""></li>
+		<li><img src="images/1.jpg" alt=""></li>
+		<li><img src="images/1.jpg" alt=""></li>
+		<li><img src="images/1.jpg" alt=""></li>
+		<li><img src="images/1.jpg" alt=""></li> -->
+
+	</ul>
+	<!-- 放大效果 -->
+	<div class="large animated fadeIn">
+		<img src="" alt="" id="large_img">
+	</div>
+	<script src="zepto.js"></script>
+	<script>
+	var total = 15; //定义变量
+	var zWin = $(window);//获取window对象
+	var render = function(){//渲染函数
+		// 设置每张padding的值
+		var padding = 2;
+		var winWidth = zWin.width();//获取屏幕宽度
+		var picWidth = 	Math.floor((winWidth-padding*3)/4);//设置每张图片的宽度
+		var tmpl = "";//临时保存for循环产生的代码
+		// 循环图
+		for(var i = 1; i<=total;i++){
+			var p = padding;
+			var imgSrc = 'images/'+i+".jpg"; //图片位置
+			if(i%4 == 1){   //取余等于1的时候是第一张。取余中如果x<y,值为1;
+				p = 0;
+			}
+			// img标签写法
+			// tmpl += '<li style="width:'+picWidth+'px;height:'+picWidth+'px;padding-left:'+p+';padding-top:'+p+'+px"><img src="'+imgSrc+'" alt=""></li>'
+			// canvas标签写法
+			tmpl += '<li class="animated bounceIn" style="width:'+picWidth+'px;height:'+picWidth+'px;padding-left:'+p+'px;padding-top:'+padding+'px" data-id="'+i+'"><canvas id="cvs_'+i+'"><canvas></li>'
+			var imgObj = new Image();
+			imgObj.index = i; 
+			imgObj.onload = function(){
+				var cvs = $("#cvs_"+this.index)[0].getContext('2d'); //获取响应的节点。转化成dom节点
+				cvs.width = this.width;
+				cvs.height = this.height; //设置canvas的高宽
+				cvs.drawImage(this,0,0);  //画出图片;
+			}
+			imgObj.src = imgSrc; //请求src
+		}
+		$("#container").html(tmpl);
+	} 
+	render();
+	var wImage = $('#large_img');
+	 var domImage = wImage[0];//获取dom
+	var loadImg = function(id,callback){
+		$(".large").show();
+		var imgSrc = 'images/'+id+'.large.jpg';
+		var imgObj = new Image();
+			imgObj.onload = function(){
+				var w = this.width;
+				var h = this.height; //记录宽高
+				var wWidth = zWin.width();
+				var wHeight = zWin.height();//屏幕宽高
+				var realw = wHeight*w/h;   //真实展示的宽度
+				var paddingLeft = parseInt((wWidth-realw)/2);//要展示的宽度取整;
+				var realh = wWidth*h/w;
+				var paddingTop = parseInt((wHeight-realh)/2);
+				wImage.css('height','auto').css('width','auto')
+				wImage.css('padding-left','0px').css('padding-top','0px')
+				//判断宽高比	
+				if(h/w > 1.2){
+					wImage.attr('src',imgSrc).css('height',wHeight).css('padding-left',paddingLeft)
+				}else{
+					wImage.attr('src',imgSrc).css('width',wWidth).css('padding-top',paddingTop)
+				};
+				//加载完成以后,动画
+				callback&&callback();//兼容处理
+
+			}
+			imgObj.src = imgSrc; //请求src
+	}
+	var cid;//索引
+	 $("li").addClass("animated bounceIn")
+	// 点击图片放大
+	$("#container").delegate("li","tap",function(){
+		var _id = cid = $(this).attr("data-id");
+		loadImg(_id); //获取每个的id放大；
+	})
+
+	//关闭大图
+	$('.large').tap(function(){
+		$(this).hide();
+	}).swipeLeft(function(){
+        cid++;
+        if(cid>total){
+            cid=total;
+        }else{
+            loadImg(cid,function(){
+			domImage.addEventListener('webkitAnimationEnd',function(){
+				wImage.removeClass('animated bounceInRight');
+				domImage.removeEventListener('webkitAnimationEnd');
+			},false);
+                wImage.addClass("animated bounceInRight");
+            });
+        }
+    }).swipeRight(function(){
+        cid--;
+        if(cid<1){
+            cid=1;
+        }else{
+            loadImg(cid,function(){
+                wImage.addClass("animated bounceInLeft");
+				domImage.addEventListener('webkitAnimationEnd',function(){
+					wImage.removeClass('animated bounceInLeft');
+					domImage.removeEventListener('webkitAnimationEnd');
+				},false);
+            })
+        }
+    });
+	//左swipeLeft右swipeRight滑动，用zepto
+
+
+	</script>
+</body>
+</html>	
